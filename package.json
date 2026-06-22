@@ -1,0 +1,23 @@
+{
+  "name": "ai-wang",
+  "version": "1.0.0",
+  "description": "星域集团 (StellarElite) 智能阿旺 AI 聊天助手网页端。",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pingguo0901/ai-wang.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/pingguo0901/ai-wang/issues"
+  },
+  "homepage": "https://github.com/pingguo0901/ai-wang#readme",
+  "devDependencies": {
+    "vercel": "^54.14.5"
+  }
+}
