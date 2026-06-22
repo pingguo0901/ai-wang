@@ -185,6 +185,41 @@ body{font-family:-apple-system,'Segoe UI','Noto Sans SC',sans-serif;background:v
 .ctx-divider{height:1px;background:rgba(0,210,255,.1);margin:4px 0}
 @media(max-width:1200px){.members{display:none}}
 @media(max-width:900px){.sidebar{display:none}.channels{width:180px}}
+.friend-popup-overlay{position:fixed;inset:0;z-index:400;background:rgba(0,0,0,.55);backdrop-filter:blur(3px);display:none;align-items:center;justify-content:center}
+.friend-popup-overlay.show{display:flex}
+.friend-popup{background:rgba(6,13,31,.9);border-radius:18px;width:380px;max-width:92vw;max-height:70vh;border:1px solid rgba(0,210,255,.2);box-shadow:0 16px 48px rgba(0,0,0,.7),0 0 30px rgba(0,210,255,.08);overflow:hidden;animation:slideUp .25s ease;display:flex;flex-direction:column;position:relative}
+.friend-popup::after{content:'';position:absolute;bottom:0;left:5%;right:5%;height:1px;background:linear-gradient(90deg,transparent,rgba(0,210,255,.5),rgba(0,240,255,.7),rgba(0,210,255,.5),transparent);box-shadow:0 0 8px rgba(0,210,255,.4);z-index:2}
+.friend-popup-header{padding:20px 20px 14px;border-bottom:1px solid rgba(0,210,255,.1);display:flex;align-items:center;justify-content:space-between;position:relative;z-index:1}
+.friend-popup-header h3{font-size:16px;font-weight:700;display:flex;align-items:center;gap:8px}
+.friend-popup-header .count{font-size:12px;color:var(--text2);font-weight:400}
+.friend-popup-close{width:32px;height:32px;border-radius:4px;background:transparent;border:1px solid rgba(0,210,255,.2);color:var(--text2);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:all .3s;position:relative;overflow:hidden}
+.friend-popup-close:hover{background:rgba(239,68,68,.1);border-color:var(--red);color:var(--red)}
+.friend-popup-search{padding:10px 16px;border-bottom:1px solid rgba(0,210,255,.06);position:relative;z-index:1}
+.friend-popup-search input{width:100%;background:rgba(255,255,255,.03);border:1px solid rgba(0,210,255,.15);border-radius:10px;padding:9px 14px 9px 36px;color:var(--text);font-size:13px;outline:none;font-family:inherit}
+.friend-popup-search input:focus{border-color:var(--accent)}
+.friend-popup-search .s-icon{position:absolute;left:28px;top:50%;transform:translateY(-50%);font-size:14px;color:var(--text3);pointer-events:none}
+.friend-popup-body{flex:1;overflow-y:auto;padding:8px 12px;position:relative;z-index:1}
+.friend-popup-body::-webkit-scrollbar{width:4px}
+.friend-popup-body::-webkit-scrollbar-thumb{background:rgba(0,210,255,.15);border-radius:2px}
+.friend-section-label{font-size:10px;color:var(--text3);padding:10px 8px 4px;text-transform:uppercase;letter-spacing:1.5px;font-weight:600}
+.friend-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:4px;cursor:pointer;transition:all .3s;border:1px solid rgba(0,210,255,.08);position:relative;overflow:hidden;background:transparent;font-size:13px;color:var(--text2)}
+.friend-item::before,.friend-item::after{content:'';position:absolute;width:4px;height:4px;border:1px solid rgba(0,210,255,.3);transition:.3s ease}
+.friend-item::before{top:0;left:0;border-right:none;border-bottom:none}
+.friend-item::after{bottom:0;right:0;border-left:none;border-top:none}
+.friend-item:hover{background:rgba(0,210,255,.06);color:var(--text);border-color:rgba(0,210,255,.4);box-shadow:inset 0 0 12px rgba(0,210,255,.08),0 0 14px rgba(0,210,255,.06)}
+.friend-item:hover::before{transform:translate(-1px,-1px);filter:drop-shadow(0 0 2px #00d2ff);border-color:rgba(0,210,255,.7)}
+.friend-item:hover::after{transform:translate(1px,1px);filter:drop-shadow(0 0 2px #00d2ff);border-color:rgba(0,210,255,.7)}
+.friend-avatar{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.friend-avatar.online{border:2px solid var(--green);box-shadow:0 0 8px rgba(34,197,94,.3)}
+.friend-avatar.offline{border:2px solid rgba(255,255,255,.1)}
+.friend-avatar.away{border:2px solid var(--orange);box-shadow:0 0 8px rgba(245,158,11,.3)}
+.friend-info{flex:1;min-width:0}
+.friend-info .fname{font-size:13px;font-weight:600;color:var(--text)}
+.friend-info .fstatus{font-size:11px;color:var(--text3);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.friend-online-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.friend-online-dot.online{background:var(--green);box-shadow:0 0 6px rgba(34,197,94,.5)}
+.friend-online-dot.offline{background:var(--text3)}
+.friend-online-dot.away{background:var(--orange);box-shadow:0 0 6px rgba(245,158,11,.5)}
 </style>
 </head>
 <body>
@@ -254,6 +289,13 @@ body{font-family:-apple-system,'Segoe UI','Noto Sans SC',sans-serif;background:v
 <div class="ctx-divider"></div>
 <div class="ctx-item danger" onclick="ctxDelete()">🗑️ 删除消息</div>
 </div>
+<div class="friend-popup-overlay" id="friendPopupOverlay">
+<div class="friend-popup">
+<div class="friend-popup-header"><h3>👤 好友列表 <span class="count" id="friendCount">12人在线</span></h3><button class="friend-popup-close" onclick="closeFriendPopup()">✖️</button></div>
+<div class="friend-popup-search"><span class="s-icon">🔍</span><input id="friendSearchInput" placeholder="搜索好友..." oninput="filterFriends()"></div>
+<div class="friend-popup-body" id="friendPopupBody"></div>
+</div>
+</div>
 <div class="modal-overlay" id="createModal"><div class="modal"><div class="modal-header"><h2>✨ 创建服务器</h2><p>给你的服务器起个名字，选个图标</p></div><div class="modal-body"><label class="modal-label">服务器头像</label><div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()"><div class="upload-placeholder"><span class="upload-icon">📷</span></div><div class="upload-preview" id="uploadPreview"><img id="previewImg" src="" alt="预览"></div><button class="upload-remove" id="uploadRemove" onclick="event.stopPropagation();removeImage()">✕</button></div><input type="file" id="fileInput" accept="image/*" style="display:none" onchange="handleImageUpload(event)"><label class="modal-label">服务器名称</label><input class="modal-input" id="serverNameInput" placeholder="输入服务器名称..." maxlength="20" oninput="updateCreateBtn()"></div><div class="modal-footer"><button class="modal-btn cancel" onclick="closeCreateModal()">取消</button><button class="modal-btn cancel" onclick="openJoinModal()">加入服务器</button><button class="modal-btn confirm" id="createBtn" disabled onclick="createServer()">创建</button></div></div></div>
 <div class="modal-overlay" id="joinModal"><div class="modal"><div class="modal-header" style="position:relative"><button style="position:absolute;top:0;right:0;background:none;border:none;color:var(--text2);font-size:20px;cursor:pointer;padding:4px 8px;border-radius:8px" onclick="closeJoinModal()">✖️</button><h2>🔗 加入服务器</h2><p>输入邀请链接，即刻加入</p></div><div class="modal-body"><label class="modal-label">邀请链接</label><input class="modal-input" id="inviteLinkInput" placeholder="粘贴邀请链接..." oninput="updateJoinBtn()"></div><div class="modal-footer" style="justify-content:space-between"><button class="modal-btn cancel" onclick="backToCreateModal()">← 后退</button><button class="modal-btn confirm" id="joinBtn" disabled onclick="joinServer()">加入服务器</button></div></div></div>
 <script>
@@ -275,7 +317,7 @@ function renderMessages(){var msgs=getMessages(currentChannel);var html='<div cl
 // ═══ Send ═══
 function toggleUploadMenu(e){e.stopPropagation();document.getElementById('uploadPopup').classList.toggle('show')}
 function handleFileUpload(e){document.getElementById('uploadPopup').classList.remove('show');var f=e.target.files[0];if(!f)return;var n=new Date(),t=String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0');var lb=f.type.indexOf('image/')===0?'🖼️ 照片':f.type.indexOf('video/')===0?'🎬 视频':'📁 文件';var r=document.createElement('div');r.className='msg-row self';r.innerHTML='<div class="msg-avatar orange">😎</div><div class="msg-bubble"><div class="msg-sender">我</div><div class="msg-text">'+lb+'：'+f.name+' ('+(f.size/1024).toFixed(1)+'KB)</div><div class="msg-time">'+t+'</div><div class="msg-status"><span class="sdot"></span></div></div>';document.getElementById('messages').appendChild(r);document.getElementById('messages').scrollTop=document.getElementById('messages').scrollHeight}
-function toggleChDropdown(e){e.stopPropagation();var d=document.getElementById('chDropdown');if(currentServer==='dm'){d.innerHTML='<div class="ch-dropdown-item" onclick="alert(\'打开好友列表\')">👤 好友列表</div>'}else{d.innerHTML='<div class="ch-dropdown-item" onclick="addChannel()">➕ 添加频道</div><div class="ch-dropdown-divider"></div><div class="ch-dropdown-item" onclick="addMeetingRoom()">📞 添加会议室</div>'}d.classList.toggle('show')}
+function toggleChDropdown(e){e.stopPropagation();var d=document.getElementById('chDropdown');if(currentServer==='dm'){d.innerHTML='<div class="ch-dropdown-item" onclick="openFriendPopup()">👤 好友列表</div>'}else{d.innerHTML='<div class="ch-dropdown-item" onclick="addChannel()">➕ 添加频道</div><div class="ch-dropdown-divider"></div><div class="ch-dropdown-item" onclick="addMeetingRoom()">📞 添加会议室</div>'}d.classList.toggle('show')}
 function addChannel(){document.getElementById('chDropdown').classList.remove('show');var n=prompt('频道名称:');if(n){var s=serverData[currentServer],ks=Object.keys(s.channels),sec=ks[0]||'默认',id='ch-'+Date.now();if(!s.channels[sec])s.channels[sec]=[];s.channels[sec].push({icon:'💬',name:n,badge:'',id:id});renderChannels()}}
 function addMeetingRoom(){document.getElementById('chDropdown').classList.remove('show');var n=prompt('会议室名称:');if(n){var s=serverData[currentServer],ks=Object.keys(s.channels),sec=ks[0]||'默认',id='meet-'+Date.now();if(!s.channels[sec])s.channels[sec]=[];s.channels[sec].push({icon:'📞',name:n,badge:'',id:id});renderChannels()}}
 function sendMessage(){var inp=document.getElementById('msgInput'),msg=inp.value.trim();if(!msg)return;var n=new Date(),t=String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0');var r=document.createElement('div');r.className='msg-row self';r.innerHTML='<div class="msg-avatar orange">😎</div><div class="msg-bubble"><div class="msg-sender">我</div><div class="msg-text">'+msg+'</div><div class="msg-time">'+t+'</div><div class="msg-status"><span class="sdot"></span></div></div>';document.getElementById('messages').appendChild(r);document.getElementById('messages').scrollTop=document.getElementById('messages').scrollHeight;inp.value=''}
@@ -326,6 +368,98 @@ function ctxReact(){if(__ctxTarget){var em=prompt('输入表情:','👍');if(em)
 
 // ═══ Init ═══
 renderChannels();
+
+// ═══ Friend List Popup ═══
+const friendsData=[
+{name:'张经理',avatar:'👔',color:'purple',status:'在线',online:'online',tag:'产品部',bio:'Q2数据分析报告已更新'},
+{name:'李工',avatar:'🔧',color:'green',status:'在线',online:'online',tag:'开发部',bio:'刚优化完语音引擎'},
+{name:'王设计',avatar:'🎨',color:'blue',status:'离开',online:'away',tag:'设计部',bio:'新UI方案细化了'},
+{name:'赵运营',avatar:'📋',color:'purple',status:'在线',online:'online',tag:'运营部',bio:'活动方案已到位'},
+{name:'刘前端',avatar:'⚛️',color:'orange',status:'在线',online:'online',tag:'开发部',bio:'组件库重构中'},
+{name:'陈后端',avatar:'🖥️',color:'green',status:'在线',online:'online',tag:'开发部',bio:'API文档更新'},
+{name:'周测试',avatar:'🧪',color:'red',status:'离线',online:'offline',tag:'QA部',bio:''},
+{name:'吴运维',avatar:'🔧',color:'blue',status:'离线',online:'offline',tag:'运维部',bio:''},
+{name:'郑架构',avatar:'🏗️',color:'purple',status:'在线',online:'online',tag:'架构部',bio:'微服务拆分方案'},
+{name:'钱算法',avatar:'🧠',color:'green',status:'离开',online:'away',tag:'AI部',bio:'新模型训练中'},
+{name:'孙数据',avatar:'📊',color:'blue',status:'离线',online:'offline',tag:'数据部',bio:''},
+{name:'智能阿旺',avatar:'🐾',color:'blue',status:'在线',online:'online',tag:'AI',bio:'随时为你效劳 ✨'}
+];
+function renderFriendPopup(filter){var html='',online=[],away=[],offline=[];
+friendsData.forEach(function(f){
+var match=!filter||f.name.indexOf(filter)>=0||f.tag.indexOf(filter)>=0||f.bio.indexOf(filter)>=0;
+if(!match)return;
+if(f.online==='online')online.push(f);
+else if(f.online==='away')away.push(f);
+else offline.push(f);
+});
+function items(arr,label){
+if(arr.length===0)return'';
+var h='<div class="friend-section-label">'+label+' — '+arr.length+'人</div>';
+arr.forEach(function(f){
+h+='<div class="friend-item" onclick="selectFriendFromPopup(\''+f.name+'\',\''+f.avatar+'\')"><div class="friend-avatar '+f.online+'" style="background:linear-gradient(135deg,var(--primary),#'+(f.color==='purple'?'a855f7':f.color==='green'?'22c55e':f.color==='blue'?'00d2ff':f.color==='orange'?'f59e0b':'ef4444')+');font-size:16px">'+f.avatar+'</div><div class="friend-info"><div class="fname">'+f.name+'</div><div class="fstatus">'+(f.bio||'暂无签名')+'</div></div><span class="friend-online-dot '+f.online+'"></span></div>';
+});
+return h;}
+html+=items(online,'🟢 在线');
+html+=items(away,'🟡 离开');
+html+=items(offline,'⚫ 离线');
+document.getElementById('friendPopupBody').innerHTML=html||'<div style="text-align:center;padding:30px;color:var(--text3)">未找到匹配的好友</div>';
+var on=online.length+away.length;
+document.getElementById('friendCount').textContent=on+'人在线';
+}
+function openFriendPopup(){
+document.getElementById('chDropdown').classList.remove('show');
+renderFriendPopup();
+document.getElementById('friendPopupOverlay').classList.add('show');
+setTimeout(function(){document.getElementById('friendSearchInput').focus()},150);
+}
+function closeFriendPopup(){
+document.getElementById('friendPopupOverlay').classList.remove('show');
+document.getElementById('friendSearchInput').value='';
+}
+function filterFriends(){
+var q=document.getElementById('friendSearchInput').value.trim();
+renderFriendPopup(q);
+}
+function selectFriendFromPopup(name,avatar){
+// 关闭弹窗
+closeFriendPopup();
+// 确保在dm模式下
+if(currentServer!=='dm'){
+// 切换到dm服务器
+var dmIcon=document.querySelector('[data-server="dm"]');
+if(dmIcon)selectServer(dmIcon);
+}
+var s=serverData['dm'];
+// 查找是否已存在
+var exists=false,secKey='最近';
+for(var sec in s.channels){
+for(var i=0;i<s.channels[sec].length;i++){
+if(s.channels[sec][i].name===name){exists=true;break;}
+}
+if(exists)break;
+}
+if(!exists){
+// 添加好友到频道列表
+var status=friendStatus(name),icon=status==='online'?'🟢':status==='away'?'🟡':'🔴';
+var id='dm-'+name.replace(/\s/g,'-').toLowerCase();
+if(!s.channels['最近'])s.channels['最近']=[];
+s.channels['最近'].push({icon:icon,name:name,badge:'',id:id});
+// 同时添加消息缓存
+channelMessages[id]=channelMessages['dm-awang']?[{avatar:'blue',sender:name,text:'对话已建立！发送第一条消息吧 🐾',time:new Date().getHours()+':'+String(new Date().getMinutes()).padStart(2,'0')}]:[{avatar:'purple',sender:name,text:'对话已建立！',time:new Date().getHours()+':'+String(new Date().getMinutes()).padStart(2,'0')}];
+// 加入在线列表
+if(s.members.onlineList.indexOf(name)===-1)s.members.onlineList.push(name);
+s.members.online++;
+}
+renderChannels();
+// 选中新好友频道
+var cid='dm-'+name.replace(/\s/g,'-').toLowerCase();
+setTimeout(function(){selectChannel(cid,name)},100);
+}
+function friendStatus(name){
+var f=friendsData.find(function(f){return f.name===name});
+return f?f.online:'offline';
+}
+document.getElementById('friendPopupOverlay').addEventListener('click',function(e){if(e.target===this)closeFriendPopup()});
 
 // ═══ LED Stars ═══
 (function(){var c=document.getElementById('bgStars');if(!c)return;var cl=['#00d2ff','#ff00ff','#6c5ce7','#00ff88','#ff4488','#a855f7','#00e5ff','#ff3399'];for(var i=0;i<40;i++){var s=document.createElement('div');s.style.cssText='position:fixed;pointer-events:none;z-index:0;left:'+(Math.random()*100)+'%;top:'+(Math.random()*100)+'%;width:'+(30+Math.random()*80)+'px;height:'+(1+Math.random()*3)+'px;background:'+cl[Math.floor(Math.random()*cl.length)]+';border-radius:2px;opacity:0;box-shadow:0 0 '+(4+Math.random()*8)+'px currentColor;animation:ledBlink 1.5s ease-in-out infinite;animation-delay:'+(Math.random()*1.5)+'s;'+(Math.random()>0.5?'transform:rotate(90deg);':'');c.appendChild(s)}for(var j=0;j<80;j++){var d=document.createElement('div');d.style.cssText='position:fixed;pointer-events:none;z-index:0;left:'+(Math.random()*100)+'%;top:'+(Math.random()*100)+'%;width:'+(1+Math.random()*3)+'px;height:'+(1+Math.random()*3)+'px;border-radius:50%;background:'+cl[Math.floor(Math.random()*cl.length)]+';opacity:0;box-shadow:0 0 '+(3+Math.random()*6)+'px currentColor;animation:ledBlink 1.5s ease-in-out infinite;animation-delay:'+(Math.random()*1.5)+'s;';c.appendChild(d)}})();
