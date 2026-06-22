@@ -1,0 +1,786 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>成员 · 星域集团</title>
+<style>
+  :root {
+    --bg: #030712; --sidebar: #060d1f; --card: transparent;
+    --primary: #6c5ce7; --accent: #00d2ff; --text: #e0e0f0;
+    --text2: #7a85a0; --text3: #4a5570;
+    --radius: 14px; --sidebar-w: 240px;
+    --green: #22c55e; --orange: #f59e0b; --red: #ef4444;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, 'Segoe UI', 'Noto Sans SC', 'Inter', sans-serif;
+    
+  background: var(--bg); color: var(--text);
+    display: flex; min-height: 100vh; overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+  .bg-stars {
+    position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background:
+      linear-gradient(rgba(0,210,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,210,255,0.03) 1px, transparent 1px),
+      radial-gradient(ellipse at 20% 10%, rgba(0,210,255,0.06) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 70%, rgba(108,92,231,0.04) 0%, transparent 50%),
+      radial-gradient(ellipse at 50% 50%, rgba(0,180,255,0.03) 0%, transparent 60%);
+    background-size: 40px 40px, 40px 40px, 100% 100%, 100% 100%, 100% 100%;
+  }
+  .star-dot {
+    position: fixed; border-radius: 50%; background: #fff;
+    animation: twinkle var(--d) ease-in-out infinite;
+    opacity: 0; pointer-events: none; z-index: 0;
+    box-shadow: 0 0 3px currentColor;
+  }
+  @keyframes twinkle { 0%,100%{opacity:0.1} 30%{opacity:0.9} 60%{opacity:0.3} }
+  @keyframes ledBlink { 0%,100%{opacity:0.05} 25%{opacity:0.9} 45%{opacity:0.15} 70%{opacity:0.8} 85%{opacity:0.2} }
+  .sidebar {
+    width: var(--sidebar-w); min-height: 100vh;
+    background: transparent; z-index: 10; flex-shrink: 0;
+    display: flex; flex-direction: column;
+    border-right: 1px solid rgba(0,210,255,0.15);
+    position: relative;
+  }
+  .sidebar::after {
+    content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(0,210,255,0.5), rgba(0,240,255,0.7), rgba(0,210,255,0.5), transparent);
+    box-shadow: 0 0 6px rgba(0,210,255,0.3); z-index: 2;
+  }
+  .sidebar-logo {
+    padding: 24px 20px; display: flex; align-items: center; gap: 12px;
+    border-bottom: 1px solid rgba(0,210,255,0.1); cursor: pointer;
+  }
+  .sidebar-logo .icon {
+    width: 44px; height: 44px; border-radius: 14px;
+    background: linear-gradient(135deg, var(--primary), #a855f7);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; box-shadow: 0 6px 20px rgba(108,92,231,0.3);
+  }
+  .sidebar-logo h2 { font-size: 16px; font-weight: 700; letter-spacing: 0.5px; }
+  .sidebar-logo span { font-size: 10px; color: var(--text2); display: block; }
+  .sidebar-nav { flex: 1; padding: 16px 12px; display: flex; flex-direction: column; gap: 4px; }
+  .nav-link {
+    display: flex; align-items: center; gap: 12px;
+    padding: 11px 14px; border-radius: 10px;
+    color: var(--text2); font-size: 14px; cursor: pointer;
+    transition: all 0.2s; text-decoration: none;
+  }
+  .nav-link:hover { background: rgba(255,255,255,0.03); color: var(--text); }
+  .nav-link.active { background: rgba(108,92,231,0.12); color: var(--primary); font-weight: 600; }
+  .nav-section { font-size: 10px; color: var(--text3); padding: 16px 14px 4px; text-transform: uppercase; letter-spacing: 1.5px; }
+  .sidebar-footer { padding: 16px; border-top: 1px solid rgba(255,255,255,0.04); }
+  .user-card { display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 10px; cursor: pointer; }
+  .user-avatar {
+    width: 38px; height: 38px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), #0098db);
+    display: flex; align-items: center; justify-content: center; font-size: 16px;
+  }
+  .user-info h4 { font-size: 13px; }
+  .user-info span { font-size: 11px; color: var(--text2); }
+
+  .main-content { flex: 1; z-index: 1; display: flex; flex-direction: column; overflow-y: auto; }
+  .topbar {
+    padding: 16px 28px; display: flex; align-items: center; gap: 16px;
+    border-bottom: 1px solid rgba(0,210,255,0.08);
+    background: transparent;
+    position: sticky; top: 0; z-index: 5; overflow: visible;
+  }
+  .topbar::after {
+    content: ''; position: absolute; bottom: -1px; left: 5%; right: 5%; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(0,210,255,0.5), rgba(0,240,255,0.8), rgba(0,210,255,0.5), transparent);
+    box-shadow: 0 0 8px rgba(0,210,255,0.4), 0 0 20px rgba(0,210,255,0.15);
+  }
+  .topbar h2 { font-size: 19px; font-weight: 700; }
+  .topbar-actions { margin-left: auto; display: flex; gap: 12px; }
+  .btn {
+    padding: 9px 20px; border-radius: 4px; border: 1px solid rgba(0,210,255,0.25);
+    font-size: 13px; font-weight: 600; cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.25,1,0.5,1); font-family: inherit;
+    background: transparent; position: relative;
+    letter-spacing: 1px; overflow: hidden;
+    box-shadow: inset 0 0 10px rgba(0,210,255,0.08), 0 3px 16px rgba(0,0,0,0.3);
+  }
+  .btn::before, .btn::after {
+    content: ''; position: absolute; width: 5px; height: 5px; border: 1.2px solid rgba(0,210,255,0.5); transition: all 0.4s ease;
+  }
+  .btn::before { top: 0; left: 0; border-right: none; border-bottom: none; }
+  .btn::after { bottom: 0; right: 0; border-left: none; border-top: none; }
+  .btn:hover::before { transform: translate(-1px,-1px); filter: drop-shadow(0 0 3px #00d2ff); }
+  .btn:hover::after { transform: translate(1px,1px); filter: drop-shadow(0 0 3px #00d2ff); }
+  .btn-primary { color: rgba(0,210,255,0.9); border-color: rgba(0,210,255,0.4); }
+  .btn-primary:hover { background: rgba(0,210,255,0.1); border-color: rgba(0,210,255,0.7); box-shadow: inset 0 0 16px rgba(0,210,255,0.25), 0 0 22px rgba(0,210,255,0.35); color: #fff; }
+  .btn-outline { color: rgba(0,210,255,0.7); }
+  .btn-outline:hover { background: rgba(0,210,255,0.06); border-color: rgba(0,210,255,0.5); box-shadow: inset 0 0 12px rgba(0,210,255,0.15); color: rgba(0,210,255,1); }
+  .content { padding: 24px; }
+
+  .search-bar { display: flex; gap: 12px; margin-bottom: 24px; align-items: center; }
+  .search-bar input {
+    flex: 1; background: var(--card); border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 25px; padding: 10px 18px; color: var(--text);
+    font-size: 14px; outline: none; font-family: inherit; max-width: 400px;
+  }
+  .search-bar input:focus { border-color: var(--primary); }
+  .search-bar input::placeholder { color: var(--text3); }
+
+  .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 24px; }
+  .stat-card { background: transparent; border-radius: var(--radius); padding: 18px; border: 1px solid rgba(0,210,255,0.15); }
+  .stat-value { font-size: 26px; font-weight: 700; }
+  .stat-label { font-size: 12px; color: var(--text2); margin-top: 2px; }
+
+  .tabs {
+    display: flex; gap: 4px; margin-bottom: 20px;
+    background: var(--card); border-radius: 12px; padding: 4px;
+    width: fit-content; border: 1px solid rgba(0,210,255,0.15);
+  }
+  .tab { padding: 8px 18px; border-radius: 10px; font-size: 13px; cursor: pointer; color: var(--text2); transition: all 0.2s; font-weight: 500; }
+  .tab.active { background: rgba(108,92,231,0.2); color: var(--text); }
+  .tab:hover:not(.active) { color: var(--text); }
+
+  .member-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
+  .member-card {
+    background: var(--card); border-radius: var(--radius);
+    padding: 20px; border: 1px solid rgba(0,210,255,0.15);
+    display: flex; align-items: center; gap: 16px;
+    cursor: pointer; transition: all 0.2s; position: relative;
+  }
+  .member-card:hover { border-color: rgba(108,92,231,0.25); transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,0,0,0.3); }
+  .member-avatar {
+    width: 52px; height: 52px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; flex-shrink: 0; position: relative;
+  }
+  .member-avatar .status-dot {
+    position: absolute; bottom: 2px; right: 2px;
+    width: 13px; height: 13px; border-radius: 50%; border: 3px solid var(--card);
+  }
+  .status-dot.online { background: var(--green); }
+  .status-dot.busy { background: var(--orange); }
+  .status-dot.offline { background: var(--text3); }
+  .member-info { flex: 1; }
+  .member-info h4 { font-size: 15px; font-weight: 600; margin-bottom: 3px; }
+  .member-info .last-seen { font-size: 11px; color: var(--text3); }
+  .member-actions { display: flex; flex-direction: column; gap: 6px; }
+  .action-btn {
+    width: 34px; height: 34px; border-radius: 50%;
+    background: var(--card); border: 1px solid rgba(255,255,255,0.06);
+    color: var(--text2); font-size: 14px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; transition: all 0.2s;
+  }
+  .action-btn:hover { background: rgba(108,92,231,0.2); color: var(--primary); }
+
+  .more-menu {
+    position: fixed; background: var(--card); border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.06);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.6);
+    z-index: 500; overflow: hidden; display: none; min-width: 140px;
+  }
+  .more-menu.show { display: block; }
+  .more-menu-item {
+    padding: 10px 16px; font-size: 13px; cursor: pointer;
+    color: var(--text2); transition: all 0.15s;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .more-menu-item:hover { background: rgba(255,255,255,0.04); color: var(--text); }
+  .more-menu-item.danger { color: var(--red); }
+  .more-menu-item.danger:hover { background: rgba(239,68,68,0.1); }
+
+  .empty-state { text-align: center; padding: 60px 20px; color: var(--text3); }
+  .empty-state .empty-icon { font-size: 56px; display: block; margin-bottom: 16px; }
+  .empty-state h3 { font-size: 18px; color: var(--text2); margin-bottom: 6px; }
+  .empty-state p { font-size: 13px; }
+
+  .profile-overlay {
+    position: fixed; inset: 0; z-index: 500;
+    background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);
+    display: none; align-items: center; justify-content: center;
+  }
+  .profile-overlay.show { display: flex; }
+  .profile-modal {
+    background: var(--card); border-radius: 20px;
+    width: 380px; max-width: 90vw; overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.06);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    animation: slideUp 0.25s ease;
+  }
+  @keyframes slideUp {
+    from { transform: translateY(30px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+  .profile-banner { height: 100px; position: relative; background: linear-gradient(135deg, var(--primary), var(--accent)); }
+  .profile-close {
+    position: absolute; top: 12px; right: 12px;
+    width: 32px; height: 32px; border-radius: 50%;
+    background: rgba(0,0,0,0.45); border: none; color: #fff;
+    font-size: 16px; cursor: pointer; display: flex;
+    align-items: center; justify-content: center; transition: background 0.2s; z-index: 2;
+  }
+  .profile-close:hover { background: rgba(0,0,0,0.65); }
+  .profile-avatar-large {
+    width: 76px; height: 76px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 34px; position: absolute; bottom: -38px; left: 24px;
+    border: 4px solid var(--card);
+  }
+  .profile-body { padding: 50px 24px 24px; }
+  .profile-body h3 { font-size: 20px; font-weight: 700; margin-bottom: 2px; }
+  .profile-body .profile-id { font-size: 12px; color: var(--text3); margin-bottom: 12px; }
+  .profile-field { padding: 12px 0; border-bottom: 1px solid rgba(0,210,255,0.1); display: flex; gap: 12px; }
+  .profile-field:last-child { border-bottom: none; }
+  .profile-field .pf-label { font-size: 12px; color: var(--text3); width: 56px; flex-shrink: 0; }
+  .profile-field .pf-value { font-size: 13px; }
+  .status-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; padding: 3px 10px; border-radius: 10px; font-weight: 500; }
+  .status-badge.online { background: rgba(34,197,94,0.12); color: var(--green); }
+  .status-badge.busy { background: rgba(245,158,11,0.12); color: var(--orange); }
+  .status-badge.offline { background: rgba(255,255,255,0.04); color: var(--text3); }
+  .status-badge.blocked { background: rgba(239,68,68,0.12); color: var(--red); }
+  .profile-actions { display: flex; gap: 8px; padding: 0 24px 24px; }
+  .profile-actions .btn { flex: 1; padding: 10px; border-radius: 10px; border: none; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; font-family: inherit; }
+  .profile-actions .btn-msg { background: linear-gradient(135deg, var(--primary), #7c3aed); color: #fff; }
+  .profile-actions .btn-msg:hover { box-shadow: 0 4px 16px rgba(108,92,231,0.3); }
+  .profile-actions .btn-close { background: rgba(255,255,255,0.04); color: var(--text2); }
+  .profile-actions .btn-close:hover { background: rgba(255,255,255,0.08); }
+
+  .modal-overlay {
+    position: fixed; inset: 0; z-index: 500;
+    background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);
+    display: none; align-items: center; justify-content: center;
+  }
+  .modal-overlay.show { display: flex; }
+  .create-modal {
+    background: var(--card); border-radius: 20px;
+    width: 420px; max-width: 90vw; overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.06);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    animation: slideUp 0.25s ease;
+  }
+  .create-header { padding: 24px 24px 0; position: relative; }
+  .create-close {
+    position: absolute; top: 0; right: 12px;
+    background: none; border: none; color: var(--text2);
+    font-size: 20px; cursor: pointer; padding: 4px 8px;
+    border-radius: 8px; transition: all 0.2s;
+  }
+  .create-close:hover { background: rgba(255,255,255,0.05); }
+  .create-header h2 { font-size: 20px; font-weight: 700; }
+  .create-header p { font-size: 13px; color: var(--text2); margin-top: 4px; }
+  .create-body { padding: 20px 24px; }
+  .modal-label { font-size: 11px; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; display: block; }
+  .modal-input {
+    width: 100%; background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 10px; padding: 10px 14px;
+    color: var(--text); font-size: 14px; outline: none;
+    font-family: inherit; margin-bottom: 14px;
+  }
+  .modal-input:focus { border-color: var(--primary); }
+  .modal-input::placeholder { color: var(--text3); }
+  .create-footer { padding: 0 24px 24px; display: flex; gap: 12px; justify-content: flex-end; }
+  .modal-btn {
+    padding: 10px 24px; border-radius: 10px; border: none;
+    font-size: 14px; font-weight: 600; cursor: pointer;
+    transition: all 0.2s; font-family: inherit;
+  }
+  .modal-btn.cancel { background: transparent; color: var(--text2); }
+  .modal-btn.cancel:hover { color: var(--text); }
+  .modal-btn.confirm { background: linear-gradient(135deg, var(--primary), #7c3aed); color: #fff; }
+  .modal-btn.confirm:hover { box-shadow: 0 4px 16px rgba(108,92,231,0.3); }
+  .modal-btn.confirm:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .model-select {
+    position: relative;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 10px; padding: 10px 14px;
+    color: var(--text); font-size: 14px;
+    display: flex; align-items: center; justify-content: space-between;
+    cursor: pointer; transition: border 0.2s;
+    margin-bottom: 14px;
+  }
+  .model-select:hover { border-color: var(--primary); }
+  .model-dropdown {
+    position: absolute; top: 100%; left: 0; right: 0;
+    background: var(--card); border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.06);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.6);
+    z-index: 50; overflow: hidden;
+    display: none; margin-top: 4px;
+  }
+  .model-dropdown.show { display: block; }
+  .model-option {
+    padding: 10px 14px; font-size: 13px; cursor: pointer;
+    color: var(--text2); transition: all 0.15s;
+  }
+  .model-option:hover { background: rgba(255,255,255,0.04); color: var(--text); }
+  .model-option.active { background: rgba(108,92,231,0.12); color: var(--primary); }
+
+  @media (max-width: 768px) {
+    .sidebar { display: none; }
+    .stats-row { grid-template-columns: 1fr; }
+    .member-grid { grid-template-columns: 1fr; }
+    .content { padding: 16px; }
+  }
+
+  @keyframes ledBlink { 0%,100%{opacity:0.05} 25%{opacity:0.9} 45%{opacity:0.15} 70%{opacity:0.8} 85%{opacity:0.2} }</style>
+</head>
+<body>
+
+<div class="bg-stars"></div>
+
+<aside class="sidebar">
+  <div class="sidebar-logo" onclick="location.href='index.html'">
+    <div class="icon">🌌</div>
+    <div><h2>星域集团</h2><span>STAR DOMAIN</span></div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section">主菜单</div>
+    <a class="nav-link" href="index.html">📊 仪表盘</a>
+    <a class="nav-link" href="friends.html">👤 好友</a>
+    <a class="nav-link active">👥 成员</a>
+    <a class="nav-link" href="chat.html">💬 聊天室</a>
+    <a class="nav-link" href="studio.html">🏭 工作室</a>
+    <div class="nav-section">业务</div>
+    <a class="nav-link">📈 数据分析</a>
+    <a class="nav-link">👥 团队成员</a>
+    <a class="nav-link">📚 知识库</a>
+    <div class="nav-section">系统</div>
+    <a class="nav-link">⚙️ 设置</a>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="user-card">
+      <div class="user-avatar">🐾</div>
+      <div class="user-info"><h4>管理员</h4><span>admin@stardomain.com</span></div>
+    </div>
+  </div>
+</aside>
+
+<div class="main-content">
+  <svg width="0" height="0" style="position:absolute;pointer-events:none">
+  <defs>
+    <linearGradient id="cyberGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#a855f7"/>
+      <stop offset="33%" stop-color="#ff00cc"/>
+      <stop offset="66%" stop-color="#ff4488"/>
+      <stop offset="100%" stop-color="#ff0066"/>
+    </linearGradient>
+  </defs>
+</svg><div class="topbar">
+    <h2>👥 成员</h2>
+    <div class="topbar-actions">
+      <button class="btn btn-outline" onclick="openCreateMember()">➕ 创建成员</button>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="search-bar">
+      <input placeholder="🔍 搜索成员..." id="searchInput" oninput="filterMembers()">
+      <div class="tabs">
+        <div class="tab active" onclick="switchTab(this, 'all')">全部</div>
+        <div class="tab" onclick="switchTab(this, 'online')">在线</div>
+        <div class="tab" onclick="switchTab(this, 'offline')">离线</div>
+        <div class="tab" onclick="switchTab(this, 'blocked')">📦 归档</div>
+      </div>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-card"><div class="stat-value" id="totalCount"><svg width="60" height="30" viewBox="0 0 60 30"><text x="0" y="26" font-family="sans-serif" font-size="26" font-weight="700" fill="none" stroke="url(#cyberGrad)" stroke-width="1.2">8</text></svg></div><div class="stat-label" id="totalLabel">全部成员</div></div>
+      <div class="stat-card"><div class="stat-value" id="onlineCount"><svg width="60" height="30" viewBox="0 0 60 30"><text x="0" y="26" font-family="sans-serif" font-size="26" font-weight="700" fill="none" stroke="url(#cyberGrad)" stroke-width="1.2">5</text></svg></div><div class="stat-label" id="onlineLabel">在线</div></div>
+      <div class="stat-card"><div class="stat-value" id="offlineCount"><svg width="60" height="30" viewBox="0 0 60 30"><text x="0" y="26" font-family="sans-serif" font-size="26" font-weight="700" fill="none" stroke="url(#cyberGrad)" stroke-width="1.2">3</text></svg></div><div class="stat-label" id="offlineLabel">离线</div></div>
+    </div>
+
+    <div class="member-grid" id="memberGrid"></div>
+  </div>
+</div>
+
+<script>
+const members = [
+  { id:'mb-001', name:'张经理', job:'项目总监', status:'online', lastSeen:'在线', color:'linear-gradient(135deg, #6c5ce7, #a855f7)', emoji:'👔', bio:'专注项目管理十年', region:'北京 · 中国' },
+  { id:'mb-002', name:'李工', job:'高级工程师', status:'online', lastSeen:'在线', color:'linear-gradient(135deg, #22c55e, #16a34a)', emoji:'🔧', bio:'代码即艺术', region:'深圳 · 中国' },
+  { id:'mb-003', name:'王设计', job:'设计主管', status:'busy', lastSeen:'忙碌中', color:'linear-gradient(135deg, #f59e0b, #d97706)', emoji:'🎨', bio:'用设计让世界更美好 ✨', region:'上海 · 中国' },
+  { id:'mb-004', name:'赵运营', job:'运营经理', status:'online', lastSeen:'在线', color:'linear-gradient(135deg, #00d2ff, #0098db)', emoji:'📊', bio:'数据驱动运营', region:'广州 · 中国' },
+  { id:'mb-005', name:'智能阿旺', job:'AI助手', status:'online', lastSeen:'24小时在线', color:'linear-gradient(135deg, #6c5ce7, #00d2ff)', emoji:'🐾', bio:'星域集团AI助手 🚀', region:'云端 · 星域网络' },
+  { id:'mb-006', name:'刘前端', job:'前端开发', status:'offline', lastSeen:'1小时前在线', color:'linear-gradient(135deg, #ef4444, #dc2626)', emoji:'💻', bio:'像素级完美', region:'杭州 · 中国' },
+  { id:'mb-007', name:'陈后端', job:'后端开发', status:'offline', lastSeen:'3小时前在线', color:'linear-gradient(135deg, #8b5cf6, #6366f1)', emoji:'🖥️', bio:'高并发架构爱好者', region:'成都 · 中国' },
+  { id:'mb-008', name:'周测试', job:'测试工程师', status:'offline', lastSeen:'昨天在线', color:'linear-gradient(135deg, #ec4899, #db2777)', emoji:'🧪', bio:'Bug猎手 🔍', region:'武汉 · 中国' },
+];
+
+let currentTab = 'all';
+let deletedCount = 0;
+let activeMenuId = null;
+
+function renderMembers(data) {
+  if (data.length === 0) {
+    document.getElementById('memberGrid').innerHTML = `<div class="empty-state" style="grid-column:1/-1"><span class="empty-icon">👥</span><h3>没有找到成员</h3><p>试试其他筛选条件，或者创建新成员</p></div>`;
+    return;
+  }
+  let html = '';
+  for (const m of data) {
+    const cls = m.status === 'online' ? 'online' : m.status === 'busy' ? 'busy' : 'offline';
+    html += `<div class="member-card" onclick="viewProfile('${m.id}')">
+      <div class="member-avatar" style="background:${m.color}">${m.emoji}<span class="status-dot ${cls}"></span></div>
+      <div class="member-info"><h4>${m.name}</h4><div class="last-seen">${m.lastSeen}</div></div>
+      <div class="member-actions">
+        <button class="action-btn" title="更多" style="position:relative" onclick="event.stopPropagation();toggleMoreMenu(event,'${m.id}')">⋯</button>
+      </div>
+    </div>`;
+  }
+  document.getElementById('memberGrid').innerHTML = html;
+}
+
+function filterMembers() {
+  const query = document.getElementById('searchInput').value.toLowerCase();
+  let data = members;
+  if (currentTab === 'blocked') {
+    data = data.filter(m => m.blocked);
+  } else {
+    data = data.filter(m => !m.blocked);
+    if (currentTab === 'online') data = data.filter(m => m.status === 'online' || m.status === 'busy');
+    else if (currentTab === 'offline') data = data.filter(m => m.status === 'offline');
+  }
+  if (query) data = data.filter(m => m.name.toLowerCase().includes(query) || m.id.toLowerCase().includes(query));
+  renderMembers(data);
+  updateStats(data);
+}
+
+function switchTab(el, tab) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  currentTab = tab;
+  if (tab === 'blocked') {
+    document.getElementById('totalLabel').textContent = '归档数量';
+    document.getElementById('onlineLabel').textContent = '删除数量';
+    document.getElementById('offlineLabel').textContent = '';
+    document.getElementById('offlineCount').textContent = '';
+  } else {
+    document.getElementById('totalLabel').textContent = '全部成员';
+    document.getElementById('onlineLabel').textContent = '在线';
+    document.getElementById('offlineLabel').textContent = '离线';
+  }
+  filterMembers();
+}
+
+function updateStats(data) {
+  if (currentTab === 'blocked') {
+    document.getElementById('totalCount').innerHTML = '<svg width="60" height="30" viewBox="0 0 60 30"><text x="0" y="26" font-family="sans-serif" font-size="26" font-weight="700" fill="none" stroke="url(#cyberGrad)" stroke-width="1.2">' + data.filter(m => m.blocked).length + '</text></svg>';
+    document.getElementById('onlineCount').innerHTML = '<svg width="60" height="30" viewBox="0 0 60 30"><text x="0" y="26" font-family="sans-serif" font-size="26" font-weight="700" fill="none" stroke="url(#cyberGrad)" stroke-width="1.2">' + deletedCount + '</text></svg>';
+    document.getElementById('offlineCount').textContent = '';
+  } else {
+    document.getElementById('totalCount').innerHTML = '<svg width="60" height="30" viewBox="0 0 60 30"><text x="0" y="26" font-family="sans-serif" font-size="26" font-weight="700" fill="none" stroke="url(#cyberGrad)" stroke-width="1.2">' + data.filter(m => !m.blocked).length + '</text></svg>';
+    document.getElementById('onlineCount').innerHTML = '<svg width="60" height="30" viewBox="0 0 60 30"><text x="0" y="26" font-family="sans-serif" font-size="26" font-weight="700" fill="none" stroke="url(#cyberGrad)" stroke-width="1.2">' + data.filter(m => !m.blocked && (m.status === 'online' || m.status === 'busy')).length + '</text></svg>';
+    document.getElementById('offlineCount').innerHTML = '<svg width="60" height="30" viewBox="0 0 60 30"><text x="0" y="26" font-family="sans-serif" font-size="26" font-weight="700" fill="none" stroke="url(#cyberGrad)" stroke-width="1.2">' + data.filter(m => !m.blocked && m.status === 'offline').length + '</text></svg>';
+  }
+}
+
+// ========== 资料弹窗 ==========
+let currentProfileId = null;
+
+function viewProfile(id) {
+  closeMoreMenu();
+  const m = members.find(m => m.id === id);
+  if (!m) return;
+  currentProfileId = id;
+  document.getElementById('profileBanner').style.background = m.color;
+  document.getElementById('profileAvatar').style.background = m.color;
+  document.getElementById('profileAvatar').textContent = m.emoji;
+  document.getElementById('profileName').textContent = m.name;
+  document.getElementById('profileId').textContent = 'ID: ' + m.id;
+  const st = m.status === 'online' ? '在线' : m.status === 'busy' ? '忙碌' : '离线';
+  document.getElementById('profileStatus').innerHTML = `<span class="status-badge ${m.status}${m.blocked?' blocked':''}">${m.blocked ? '📦 已归档' : '● ' + st}</span>`;
+  document.getElementById('profileBio').textContent = m.bio || '这个人很懒，什么都没写...';
+  document.getElementById('profileJob').textContent = m.job || '未设置';
+  document.getElementById('profileModal').classList.add('show');
+}
+
+function closeProfileModal() {
+  document.getElementById('profileModal').classList.remove('show');
+  currentProfileId = null;
+}
+
+function profileOpenChat() {
+  if (currentProfileId) {
+    closeProfileModal();
+    window.location.href = 'chat.html?dm=' + currentProfileId;
+  }
+}
+
+// ========== 更多菜单 ==========
+function toggleMoreMenu(e, id) {
+  e.stopPropagation();
+  const old = document.getElementById('moreMenu');
+  if (old) { old.remove(); if (activeMenuId === id) { activeMenuId = null; return; } }
+  activeMenuId = id;
+  const m = members.find(m => m.id === id);
+  const blocked = m && m.blocked;
+  const btnRect = e.target.getBoundingClientRect();
+  const menu = document.createElement('div');
+  menu.id = 'moreMenu';
+  menu.className = 'more-menu show';
+  menu.innerHTML = `
+    <div class="more-menu-item" data-action="edit" data-id="${id}">✏️ 编辑资料</div>
+    <div class="more-menu-item" data-action="view" data-id="${id}">👤 查看资料</div>
+    <div class="more-menu-item danger" data-action="block" data-id="${id}">${blocked ? '📤 取消归档' : '📦 归档'}</div>
+    <div class="more-menu-item danger" data-action="remove" data-id="${id}">🗑️ 删除成员</div>
+  `;
+  menu.style.left = Math.min(btnRect.right - 140, btnRect.left) + 'px';
+  menu.style.top = (btnRect.bottom + 4) + 'px';
+  menu.querySelectorAll('.more-menu-item').forEach(item => {
+    item.addEventListener('click', function(ev) {
+      ev.stopPropagation();
+      const a = this.dataset.action;
+      const i = this.dataset.id;
+      if (a === 'view') viewProfile(i);
+      else if (a === 'edit') editMember(i);
+      else if (a === 'remove') removeMember(i);
+      else if (a === 'block') blockMember(i);
+    });
+  });
+  document.body.appendChild(menu);
+}
+
+function editMember(id) {
+  closeMoreMenu();
+  const m = members.find(m => m.id === id);
+  if (!m) return;
+  document.getElementById('editBanner').style.background = m.color;
+  document.getElementById('editAvatar').style.background = m.color;
+  document.getElementById('editAvatar').innerHTML = m.customAvatar ? `<img src="${m.customAvatar}" style="width:100%;height:100%;border-radius:50%;object-fit:cover">` + '<input type="file" id="editAvatarInput" accept="image/*" style="display:none" onchange="handleEditAvatar(event)">' : m.emoji + '<input type="file" id="editAvatarInput" accept="image/*" style="display:none" onchange="handleEditAvatar(event)">';
+  document.getElementById('editNameInput').value = m.name;
+  document.getElementById('editIdInput').value = m.id;
+  document.getElementById('editJobInput').value = m.job || '';
+  document.getElementById('editBioInput').value = m.bio || '';
+  document.getElementById('editProfileModal').classList.add('show');
+  setTimeout(() => document.getElementById('editNameInput').focus(), 100);
+}
+
+function closeEditModal() {
+  document.getElementById('editProfileModal').classList.remove('show');
+}
+
+function handleEditAvatar(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const m = members.find(m => m.id === document.getElementById('editIdInput').value);
+    if (m) m.customAvatar = e.target.result;
+    const avatar = document.getElementById('editAvatar');
+    avatar.style.background = 'none';
+    avatar.innerHTML = `<img src="${e.target.result}" style="width:100%;height:100%;border-radius:50%;object-fit:cover"><input type="file" id="editAvatarInput" accept="image/*" style="display:none" onchange="handleEditAvatar(event)">`;
+  };
+  reader.readAsDataURL(file);
+}
+
+function saveEdit() {
+  const m = members.find(m => m.id === document.getElementById('editIdInput').value);
+  if (!m) return;
+  m.name = document.getElementById('editNameInput').value.trim() || m.name;
+  m.job = document.getElementById('editJobInput').value.trim() || '';
+  m.bio = document.getElementById('editBioInput').value.trim() || '这个人很懒，什么都没写...';
+  if (m.customAvatar) m.emoji = '';
+  closeEditModal();
+  filterMembers();
+}
+
+// 点击遮罩关闭
+document.addEventListener('click', function(e) {
+  if (e.target.id === 'editProfileModal') closeEditModal();
+  if (e.target.id === 'profileModal') closeProfileModal();
+  if (e.target.id === 'createMemberModal') closeCreateMemberModal();
+});
+
+function removeMember(id) {
+  closeMoreMenu();
+  if (!confirm('确定要删除该成员吗？')) return;
+  const idx = members.findIndex(m => m.id === id);
+  if (idx >= 0) { members.splice(idx, 1); deletedCount++; }
+  filterMembers();
+}
+
+function blockMember(id) {
+  closeMoreMenu();
+  const m = members.find(m => m.id === id);
+  if (!m) return;
+  m.blocked = !m.blocked;
+  filterMembers();
+}
+
+function closeMoreMenu() {
+  activeMenuId = null;
+  const menu = document.getElementById('moreMenu');
+  if (menu) menu.remove();
+}
+
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.member-actions')) closeMoreMenu();
+});
+
+// ========== 创建成员弹窗 ==========
+function openCreateMember() {
+  document.getElementById('createNameInput').value = '';
+  document.getElementById('createIdInput').value = '';
+  document.getElementById('createBioInput').value = '';
+  document.getElementById('createJobInput').value = '';
+  document.getElementById('createBtn').disabled = true;
+  // 重置模型
+  document.getElementById('selectedModel').textContent = 'Gemini';
+  document.querySelectorAll('.model-option').forEach(o => o.classList.remove('active'));
+  document.querySelector('.model-option[onclick*="Gemini"]').classList.add('active');
+  document.getElementById('modelDropdown').classList.remove('show');
+  document.getElementById('createMemberModal').classList.add('show');
+  setTimeout(() => document.getElementById('createNameInput').focus(), 100);
+}
+
+function closeCreateMemberModal() {
+  document.getElementById('createMemberModal').classList.remove('show');
+}
+
+function updateCreateBtn() {
+  document.getElementById('createBtn').disabled = !document.getElementById('createNameInput').value.trim() || !document.getElementById('createIdInput').value.trim();
+}
+
+function confirmCreateMember() {
+  const name = document.getElementById('createNameInput').value.trim();
+  const uid = document.getElementById('createIdInput').value.trim();
+  if (!name || !uid) return;
+  if (members.find(m => m.id === uid)) { alert('该ID已存在'); return; }
+  members.push({
+    id: uid, name: name, status: 'online', lastSeen: '刚刚加入',
+    color: 'linear-gradient(135deg, #22c55e, #16a34a)', emoji: '🆕',
+    job: document.getElementById('createJobInput').value.trim() || '',
+    bio: document.getElementById('createBioInput').value.trim() || '这个人很懒，什么都没写...',
+    model: document.getElementById('selectedModel').textContent,
+    region: '未知地区'
+  });
+  closeCreateMemberModal();
+  filterMembers();
+}
+
+// ========== 模型下拉 ==========
+function toggleModelDropdown(e) {
+  e.stopPropagation();
+  document.getElementById('modelDropdown').classList.toggle('show');
+}
+
+function selectModel(el, model) {
+  document.querySelectorAll('.model-option').forEach(o => o.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('selectedModel').textContent = model;
+  document.getElementById('modelDropdown').classList.remove('show');
+}
+
+// 点击其他位置关闭模型下拉
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.model-select')) {
+    document.getElementById('modelDropdown').classList.remove('show');
+  }
+});
+
+// ========== 初始加载 ==========
+renderMembers(members);
+updateStats(members);
+
+  // LED灯条和灯点
+  (function() {
+    const container = document.getElementById('bgStars') || document.querySelector('.bg-stars');
+    if (!container) return;
+    const colors = ['#00d2ff','#ff00ff','#6c5ce7','#00ff88','#ff4488','#a855f7','#00e5ff','#ff3399'];
+    for (let i = 0; i < 40; i++) {
+      const strip = document.createElement('div');
+      strip.style.cssText = 'position:fixed;pointer-events:none;z-index:0;left:'+(Math.random()*100)+'%;top:'+(Math.random()*100)+'%;width:'+(30+Math.random()*80)+'px;height:'+(1+Math.random()*3)+'px;background:'+colors[Math.floor(Math.random()*colors.length)]+';border-radius:2px;opacity:0;box-shadow:0 0 '+(4+Math.random()*8)+'px currentColor;animation:ledBlink 1.5s ease-in-out infinite;animation-delay:'+(Math.random()*1.5)+'s;'+(Math.random()>0.5?'transform:rotate(90deg);':'');
+      container.appendChild(strip);
+    }
+    for (let i = 0; i < 80; i++) {
+      const dot = document.createElement('div');
+      dot.style.cssText = 'position:fixed;pointer-events:none;z-index:0;left:'+(Math.random()*100)+'%;top:'+(Math.random()*100)+'%;width:'+(1+Math.random()*3)+'px;height:'+(1+Math.random()*3)+'px;border-radius:50%;background:'+colors[Math.floor(Math.random()*colors.length)]+';opacity:0;box-shadow:0 0 '+(3+Math.random()*6)+'px currentColor;animation:ledBlink 1.5s ease-in-out infinite;animation-delay:'+(Math.random()*1.5)+'s;';
+      container.appendChild(dot);
+    }
+  })();</script>
+
+<!-- ═══ 创建成员弹窗 ═══ -->
+<div class="modal-overlay" id="createMemberModal">
+  <div class="create-modal">
+    <div class="create-header">
+      <button class="create-close" onclick="closeCreateMemberModal()">✖️</button>
+      <h2>➕ 创建成员</h2>
+      <p>创建一个新成员账号</p>
+    </div>
+    <div class="create-body">
+      <label class="modal-label">成员名称</label>
+      <input class="modal-input" id="createNameInput" placeholder="输入成员名称..." maxlength="20" oninput="updateCreateBtn()">
+      <label class="modal-label">成员ID</label>
+      <input class="modal-input" id="createIdInput" placeholder="输入成员ID..." maxlength="20" oninput="updateCreateBtn()">
+      <label class="modal-label">职业</label>
+      <input class="modal-input" id="createJobInput" placeholder="输入职业..." maxlength="20">
+      <label class="modal-label">描述</label>
+      <input class="modal-input" id="createBioInput" placeholder="输入描述..." maxlength="50">
+      <label class="modal-label">模型</label>
+      <div class="model-select" id="modelSelect" onclick="toggleModelDropdown(event)">
+        <span id="selectedModel">Gemini</span>
+        <span style="font-size:10px;color:var(--text3)">▼</span>
+        <div class="model-dropdown" id="modelDropdown">
+          <div class="model-option active" onclick="event.stopPropagation();selectModel(this,'Gemini')">Gemini</div>
+          <div class="model-option" onclick="event.stopPropagation();selectModel(this,'GPT')">GPT</div>
+          <div class="model-option" onclick="event.stopPropagation();selectModel(this,'Deepseek')">Deepseek</div>
+          <div class="model-option" onclick="event.stopPropagation();selectModel(this,'Seed')">Seed</div>
+        </div>
+      </div>
+    </div>
+    <div class="create-footer">
+      <button class="modal-btn cancel" onclick="closeCreateMemberModal()">取消</button>
+      <button class="modal-btn confirm" id="createBtn" disabled onclick="confirmCreateMember()">创建成员</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ 查看资料弹窗 ═══ -->
+<div class="profile-overlay" id="profileModal">
+  <div class="profile-modal">
+    <div class="profile-banner" id="profileBanner">
+      <button class="profile-close" onclick="closeProfileModal()">✖️</button>
+      <div class="profile-avatar-large" id="profileAvatar"></div>
+    </div>
+    <div class="profile-body">
+      <h3 id="profileName"></h3>
+      <div class="profile-id" id="profileId"></div>
+      <div class="profile-field"><span class="pf-label">状态</span><span class="pf-value" id="profileStatus"></span></div>
+      <div class="profile-field"><span class="pf-label">职业</span><span class="pf-value" id="profileJob"></span></div>
+      <div class="profile-field"><span class="pf-label">描述</span><span class="pf-value" id="profileBio"></span></div>
+    </div>
+    <div class="profile-actions">
+      <button class="btn btn-close" onclick="closeProfileModal()">关闭</button>
+      <button class="btn btn-msg" id="profileChatBtn" onclick="profileOpenChat()">💬 发消息</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ 编辑资料弹窗 ═══ -->
+<div class="profile-overlay" id="editProfileModal">
+  <div class="profile-modal">
+    <div class="profile-banner" id="editBanner">
+      <button class="profile-close" onclick="closeEditModal()">✖️</button>
+      <div class="profile-avatar-large" id="editAvatar" onclick="document.getElementById('editAvatarInput').click()" style="cursor:pointer">
+        <input type="file" id="editAvatarInput" accept="image/*" style="display:none" onchange="handleEditAvatar(event)">
+      </div>
+    </div>
+    <div class="profile-body">
+      <label class="modal-label" style="margin-bottom:4px">名称</label>
+      <input class="modal-input" id="editNameInput" placeholder="成员名称..." maxlength="20">
+      <label class="modal-label" style="margin-bottom:4px">ID</label>
+      <input class="modal-input" id="editIdInput" disabled style="opacity:0.5;cursor:not-allowed">
+      <label class="modal-label" style="margin-bottom:4px">职业</label>
+      <input class="modal-input" id="editJobInput" placeholder="职业..." maxlength="20">
+      <label class="modal-label" style="margin-bottom:4px">描述</label>
+      <input class="modal-input" id="editBioInput" placeholder="描述..." maxlength="50">
+    </div>
+    <div class="profile-actions">
+      <button class="btn btn-close" onclick="closeEditModal()">取消</button>
+      <button class="btn btn-msg" onclick="saveEdit()">💾 保存</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

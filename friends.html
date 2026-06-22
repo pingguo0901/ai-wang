@@ -1,0 +1,808 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>好友 · 星域集团</title>
+<style>
+  :root {
+    --bg: #030712; --sidebar: #060d1f; --card: transparent;
+    --primary: #6c5ce7; --accent: #00d2ff; --text: #e0e0f0;
+    --text2: #7a85a0; --text3: #4a5570;
+    --radius: 14px; --sidebar-w: 240px;
+    --green: #22c55e; --orange: #f59e0b; --red: #ef4444;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, 'Segoe UI', 'Noto Sans SC', 'Inter', sans-serif;
+    
+  background: var(--bg); color: var(--text);
+    display: flex; min-height: 100vh; overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+  .bg-stars {
+    position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background:
+      linear-gradient(rgba(0,210,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,210,255,0.03) 1px, transparent 1px),
+      radial-gradient(ellipse at 20% 10%, rgba(0,210,255,0.06) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 70%, rgba(108,92,231,0.04) 0%, transparent 50%),
+      radial-gradient(ellipse at 50% 50%, rgba(0,180,255,0.03) 0%, transparent 60%);
+    background-size: 40px 40px, 40px 40px, 100% 100%, 100% 100%, 100% 100%;
+  }
+  .star-dot {
+    position: fixed; border-radius: 50%; background: #fff;
+    animation: twinkle var(--d) ease-in-out infinite;
+    opacity: 0; pointer-events: none; z-index: 0;
+    box-shadow: 0 0 3px currentColor;
+  }
+  @keyframes twinkle { 0%,100%{opacity:0.1} 30%{opacity:0.9} 60%{opacity:0.3} }
+  @keyframes ledBlink { 0%,100%{opacity:0.05} 25%{opacity:0.9} 45%{opacity:0.15} 70%{opacity:0.8} 85%{opacity:0.2} }
+
+  /* ── 侧边栏 ── */
+  .sidebar {
+    width: var(--sidebar-w); min-height: 100vh;
+    background: transparent; z-index: 10; flex-shrink: 0;
+    display: flex; flex-direction: column;
+    border-right: 1px solid rgba(0,210,255,0.15);
+    position: relative;
+  }
+  .sidebar::after {
+    content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(0,210,255,0.5), rgba(0,240,255,0.7), rgba(0,210,255,0.5), transparent);
+    box-shadow: 0 0 6px rgba(0,210,255,0.3); z-index: 2;
+  }
+  .sidebar-logo {
+    padding: 24px 20px; display: flex; align-items: center; gap: 12px;
+    border-bottom: 1px solid rgba(0,210,255,0.1); cursor: pointer;
+  }
+  .sidebar-logo .icon {
+    width: 44px; height: 44px; border-radius: 14px;
+    background: linear-gradient(135deg, var(--primary), #a855f7);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; box-shadow: 0 6px 20px rgba(108,92,231,0.3);
+  }
+  .sidebar-logo h2 { font-size: 16px; font-weight: 700; letter-spacing: 0.5px; }
+  .sidebar-logo span { font-size: 10px; color: var(--text2); display: block; }
+  .sidebar-nav { flex: 1; padding: 16px 12px; display: flex; flex-direction: column; gap: 4px; }
+  .nav-link {
+    display: flex; align-items: center; gap: 12px;
+    padding: 11px 14px; border-radius: 10px;
+    color: var(--text2); font-size: 14px; cursor: pointer;
+    transition: all 0.2s; text-decoration: none;
+  }
+  .nav-link:hover { background: rgba(255,255,255,0.03); color: var(--text); }
+  .nav-link.active {
+    background: rgba(108,92,231,0.12); color: var(--primary); font-weight: 600;
+  }
+  .nav-section { font-size: 10px; color: var(--text3); padding: 16px 14px 4px; text-transform: uppercase; letter-spacing: 1.5px; }
+  .sidebar-footer { padding: 16px; border-top: 1px solid rgba(255,255,255,0.04); }
+  .user-card { display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 10px; cursor: pointer; }
+  .user-avatar {
+    width: 38px; height: 38px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), #0098db);
+    display: flex; align-items: center; justify-content: center; font-size: 16px;
+  }
+  .user-info h4 { font-size: 13px; }
+  .user-info span { font-size: 11px; color: var(--text2); }
+
+  /* ── 主内容 ── */
+  .main-content { flex: 1; z-index: 1; display: flex; flex-direction: column; overflow-y: auto; }
+
+  .topbar {
+    padding: 16px 28px; display: flex; align-items: center; gap: 16px;
+    border-bottom: 1px solid rgba(0,210,255,0.08);
+    background: transparent;
+    position: sticky; top: 0; z-index: 5; overflow: visible;
+  }
+  .topbar::after {
+    content: ''; position: absolute; bottom: -1px; left: 5%; right: 5%; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(0,210,255,0.5), rgba(0,240,255,0.8), rgba(0,210,255,0.5), transparent);
+    box-shadow: 0 0 8px rgba(0,210,255,0.4), 0 0 20px rgba(0,210,255,0.15);
+  }
+  .topbar h2 { font-size: 19px; font-weight: 700; }
+  .topbar-actions { margin-left: auto; display: flex; gap: 12px; }
+  .btn {
+    padding: 9px 20px; border-radius: 4px; border: 1px solid rgba(0,210,255,0.25);
+    font-size: 13px; font-weight: 600; cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.25,1,0.5,1); font-family: inherit;
+    background: transparent; position: relative;
+    letter-spacing: 1px; overflow: hidden;
+    box-shadow: inset 0 0 10px rgba(0,210,255,0.08), 0 3px 16px rgba(0,0,0,0.3);
+  }
+  .btn::before, .btn::after {
+    content: ''; position: absolute; width: 5px; height: 5px; border: 1.2px solid rgba(0,210,255,0.5); transition: all 0.4s ease;
+  }
+  .btn::before { top: 0; left: 0; border-right: none; border-bottom: none; }
+  .btn::after { bottom: 0; right: 0; border-left: none; border-top: none; }
+  .btn:hover::before { transform: translate(-1px,-1px); filter: drop-shadow(0 0 3px #00d2ff); }
+  .btn:hover::after { transform: translate(1px,1px); filter: drop-shadow(0 0 3px #00d2ff); }
+  .btn-primary { color: rgba(0,210,255,0.9); border-color: rgba(0,210,255,0.4); }
+  .btn-primary:hover { background: rgba(0,210,255,0.1); border-color: rgba(0,210,255,0.7); box-shadow: inset 0 0 16px rgba(0,210,255,0.25), 0 0 22px rgba(0,210,255,0.35); color: #fff; }
+  .btn-outline { color: rgba(0,210,255,0.7); }
+  .btn-outline:hover { background: rgba(0,210,255,0.06); border-color: rgba(0,210,255,0.5); box-shadow: inset 0 0 12px rgba(0,210,255,0.15); color: rgba(0,210,255,1); }
+
+  .content { padding: 24px; }
+
+  /* ── 搜索 ── */
+  .search-bar {
+    display: flex; gap: 12px; margin-bottom: 24px; align-items: center;
+  }
+  .search-bar input {
+    flex: 1; background: var(--card); border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 25px; padding: 10px 18px; color: var(--text);
+    font-size: 14px; outline: none; font-family: inherit;
+    max-width: 400px;
+  }
+  .search-bar input:focus { border-color: var(--primary); }
+  .search-bar input::placeholder { color: var(--text3); }
+
+  /* ── 统计 ── */
+  .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 24px; }
+  .stat-card {
+    background: transparent; border-radius: var(--radius);
+    padding: 18px; border: 1px solid rgba(0,210,255,0.15);
+  }
+  .stat-value { font-size: 26px; font-weight: 700; }
+  .stat-label { font-size: 12px; color: var(--text2); margin-top: 2px; }
+
+  /* ── 标签 ── */
+  .tabs {
+    display: flex; gap: 4px; margin-bottom: 20px;
+    background: var(--card); border-radius: 12px; padding: 4px;
+    width: fit-content; border: 1px solid rgba(0,210,255,0.15);
+  }
+  .tab {
+    padding: 8px 18px; border-radius: 10px; font-size: 13px; cursor: pointer;
+    color: var(--text2); transition: all 0.2s; font-weight: 500;
+  }
+  .tab.active { background: rgba(108,92,231,0.2); color: var(--text); }
+  .tab:hover:not(.active) { color: var(--text); }
+
+  /* ── 好友列表 ── */
+  .friend-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 14px;
+  }
+  .friend-card {
+    background: var(--card); border-radius: var(--radius);
+    padding: 20px; border: 1px solid rgba(0,210,255,0.15);
+    display: flex; align-items: center; gap: 16px;
+    cursor: pointer; transition: all 0.2s;
+    position: relative;
+  }
+  .friend-card:hover {
+    border-color: rgba(108,92,231,0.25);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+  }
+  .friend-avatar {
+    width: 52px; height: 52px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; flex-shrink: 0;
+    position: relative;
+  }
+  .friend-avatar .status-dot {
+    position: absolute; bottom: 2px; right: 2px;
+    width: 13px; height: 13px; border-radius: 50%;
+    border: 3px solid var(--card);
+  }
+  .status-dot.online { background: var(--green); }
+  .status-dot.busy { background: var(--orange); }
+  .status-dot.offline { background: var(--text3); }
+  .friend-info { flex: 1; }
+  .friend-info h4 { font-size: 15px; font-weight: 600; margin-bottom: 3px; }
+  .friend-info .role { font-size: 11px; color: var(--accent); margin-bottom: 3px; }
+  .friend-info .last-seen { font-size: 11px; color: var(--text3); }
+  .friend-actions { display: flex; flex-direction: column; gap: 6px; }
+  .action-btn {
+    width: 34px; height: 34px; border-radius: 50%;
+    background: var(--card); border: 1px solid rgba(255,255,255,0.06);
+    color: var(--text2); font-size: 14px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+  }
+  .action-btn:hover { background: rgba(108,92,231,0.2); color: var(--primary); }
+  /* ── 更多下拉 ── */
+  .more-menu {
+    position: fixed;
+    background: var(--card); border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.06);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.6);
+    z-index: 500; overflow: hidden;
+    display: none; min-width: 140px;
+  }
+  .more-menu.show { display: block; }
+  .more-menu-item {
+    padding: 10px 16px; font-size: 13px; cursor: pointer;
+    color: var(--text2); transition: all 0.15s;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .more-menu-item:hover { background: rgba(255,255,255,0.04); color: var(--text); }
+  .more-menu-item.danger { color: var(--red); }
+  .more-menu-item.danger:hover { background: rgba(239,68,68,0.1); }
+
+  /* ── 空状态 ── */
+  .empty-state {
+    text-align: center; padding: 60px 20px; color: var(--text3);
+  }
+  .empty-state .empty-icon { font-size: 56px; display: block; margin-bottom: 16px; }
+  .empty-state h3 { font-size: 18px; color: var(--text2); margin-bottom: 6px; }
+  .empty-state p { font-size: 13px; }
+
+  /* ── 资料弹窗 ── */
+  .profile-overlay {
+    position: fixed; inset: 0; z-index: 500;
+    background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);
+    display: none; align-items: center; justify-content: center;
+  }
+  .profile-overlay.show { display: flex; }
+  .profile-modal {
+    background: var(--card); border-radius: 20px;
+    width: 380px; max-width: 90vw; overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.06);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    animation: slideUp 0.25s ease;
+  }
+  @keyframes slideUp {
+    from { transform: translateY(30px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+  .profile-banner {
+    height: 100px; position: relative;
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+  }
+  .profile-close {
+    position: absolute; top: 12px; right: 12px;
+    width: 32px; height: 32px; border-radius: 50%;
+    background: rgba(0,0,0,0.45); border: none; color: #fff;
+    font-size: 16px; cursor: pointer; display: flex;
+    align-items: center; justify-content: center;
+    transition: background 0.2s; z-index: 2;
+  }
+  .profile-close:hover { background: rgba(0,0,0,0.65); }
+  .profile-avatar-large {
+    width: 76px; height: 76px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 34px; position: absolute; bottom: -38px; left: 24px;
+    border: 4px solid var(--card);
+  }
+  .profile-body {
+    padding: 50px 24px 24px;
+  }
+  .profile-body h3 { font-size: 20px; font-weight: 700; margin-bottom: 2px; }
+  .profile-body .profile-id { font-size: 12px; color: var(--text3); margin-bottom: 12px; }
+  .profile-field {
+    padding: 12px 0; border-bottom: 1px solid rgba(0,210,255,0.1);
+    display: flex; gap: 12px;
+  }
+  .profile-field:last-child { border-bottom: none; }
+  .profile-field .pf-label { font-size: 12px; color: var(--text3); width: 56px; flex-shrink: 0; }
+  .profile-field .pf-value { font-size: 13px; }
+  .status-badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 12px; padding: 3px 10px; border-radius: 10px;
+    font-weight: 500;
+  }
+  .status-badge.online { background: rgba(34,197,94,0.12); color: var(--green); }
+  .status-badge.busy { background: rgba(245,158,11,0.12); color: var(--orange); }
+  .status-badge.offline { background: rgba(255,255,255,0.04); color: var(--text3); }
+  .status-badge.blocked { background: rgba(239,68,68,0.12); color: var(--red); }
+  .profile-actions {
+    display: flex; gap: 8px; padding: 0 24px 24px;
+  }
+  .profile-actions .btn {
+    flex: 1; padding: 10px; border-radius: 10px; border: none;
+    font-size: 13px; font-weight: 600; cursor: pointer;
+    transition: all 0.2s; font-family: inherit;
+  }
+  .profile-actions .btn-msg {
+    background: linear-gradient(135deg, var(--primary), #7c3aed); color: #fff;
+  }
+  .profile-actions .btn-msg:hover { box-shadow: 0 4px 16px rgba(108,92,231,0.3); }
+  .profile-actions .btn-close {
+    background: rgba(255,255,255,0.04); color: var(--text2);
+  }
+  .profile-actions .btn-close:hover { background: rgba(255,255,255,0.08); }
+
+  /* ── 添加好友弹窗 ── */
+  .add-friend-overlay {
+    position: fixed; inset: 0; z-index: 500;
+    background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);
+    display: none; align-items: center; justify-content: center;
+  }
+  .add-friend-overlay.show { display: flex; }
+  .add-friend-modal {
+    background: var(--card); border-radius: 20px;
+    width: 420px; max-width: 90vw; overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.06);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    animation: slideUp 0.25s ease;
+  }
+  .add-friend-header {
+    padding: 24px 24px 0; position: relative;
+  }
+  .add-friend-close {
+    position: absolute; top: 0; right: 12px;
+    background: none; border: none; color: var(--text2);
+    font-size: 20px; cursor: pointer; padding: 4px 8px;
+    border-radius: 8px; transition: all 0.2s;
+  }
+  .add-friend-close:hover { background: rgba(255,255,255,0.05); }
+  .add-friend-header h2 { font-size: 20px; font-weight: 700; }
+  .add-friend-header p { font-size: 13px; color: var(--text2); margin-top: 4px; }
+  .add-friend-body { padding: 20px 24px; }
+  .search-row { display: flex; gap: 8px; margin-bottom: 16px; }
+  .search-row input {
+    flex: 1; background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 10px; padding: 10px 14px;
+    color: var(--text); font-size: 14px; outline: none;
+    font-family: inherit;
+  }
+  .search-row input:focus { border-color: var(--primary); }
+  .search-row input::placeholder { color: var(--text3); }
+  .search-btn {
+    padding: 10px 18px; border-radius: 10px; border: none;
+    background: linear-gradient(135deg, var(--primary), #7c3aed);
+    color: #fff; font-size: 13px; font-weight: 600;
+    cursor: pointer; transition: all 0.2s; font-family: inherit;
+  }
+  .search-btn:hover { box-shadow: 0 4px 14px rgba(108,92,231,0.3); }
+  .search-result {
+    max-height: 220px; overflow-y: auto;
+    display: flex; flex-direction: column; gap: 2px;
+  }
+  .search-result-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 14px; border-radius: 12px;
+    cursor: pointer; transition: background 0.15s;
+  }
+  .search-result-item:hover { background: rgba(255,255,255,0.03); }
+  .search-avatar {
+    width: 40px; height: 40px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; flex-shrink: 0;
+  }
+  .search-info h4 { font-size: 14px; font-weight: 600; }
+  .search-info span { font-size: 11px; color: var(--text3); }
+  .search-empty { text-align: center; padding: 30px; color: var(--text3); font-size: 13px; }
+
+  @media (max-width: 768px) {
+    .sidebar { display: none; }
+    .stats-row { grid-template-columns: 1fr; }
+    .friend-grid { grid-template-columns: 1fr; }
+    .content { padding: 16px; }
+  }
+
+  @keyframes ledBlink { 0%,100%{opacity:0.05} 25%{opacity:0.9} 45%{opacity:0.15} 70%{opacity:0.8} 85%{opacity:0.2} }</style>
+</head>
+<body>
+
+<div class="bg-stars"></div>
+
+<!-- ═══ 侧边栏 ═══ -->
+<aside class="sidebar">
+  <div class="sidebar-logo" onclick="location.href='index.html'">
+    <div class="icon">🌌</div>
+    <div><h2>星域集团</h2><span>STAR DOMAIN</span></div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section">主菜单</div>
+    <a class="nav-link" href="index.html">📊 仪表盘</a>
+    <a class="nav-link active" href="friends.html">👤 好友</a>
+    <a class="nav-link" href="members.html">👥 成员</a>
+    <a class="nav-link" href="chat.html">💬 聊天室</a>
+    <a class="nav-link" href="studio.html">🏭 工作室</a>
+    <div class="nav-section">业务</div>
+    <a class="nav-link">📈 数据分析</a>
+    <a class="nav-link">👥 团队成员</a>
+    <a class="nav-link">📚 知识库</a>
+    <div class="nav-section">系统</div>
+    <a class="nav-link">⚙️ 设置</a>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="user-card">
+      <div class="user-avatar">🐾</div>
+      <div class="user-info"><h4>管理员</h4><span>admin@stardomain.com</span></div>
+    </div>
+  </div>
+</aside>
+
+<!-- ═══ 主内容 ═══ -->
+<div class="main-content">
+  <svg width="0" height="0" style="position:absolute;pointer-events:none">
+  <defs>
+    <linearGradient id="cyberGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#a855f7"/>
+      <stop offset="33%" stop-color="#ff00cc"/>
+      <stop offset="66%" stop-color="#ff4488"/>
+      <stop offset="100%" stop-color="#ff0066"/>
+    </linearGradient>
+  </defs>
+</svg><div class="topbar">
+    <h2>👤 好友</h2>
+    <div class="topbar-actions">
+      <button class="btn btn-outline" onclick="openAddFriend()">➕ 添加好友</button>
+    </div>
+  </div>
+
+  <div class="content">
+    <!-- 搜索 -->
+    <div class="search-bar">
+      <input placeholder="🔍 搜索好友..." id="searchInput" oninput="filterFriends()">
+      <div class="tabs">
+        <div class="tab active" onclick="switchTab(this, 'all')">全部</div>
+        <div class="tab" onclick="switchTab(this, 'online')">在线</div>
+        <div class="tab" onclick="switchTab(this, 'offline')">离线</div>
+        <div class="tab" onclick="switchTab(this, 'blocked')">🚫 黑名单</div>
+      </div>
+    </div>
+
+    <!-- 统计 -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-value" id="totalCount"><svg width="60" height="30" viewBox="0 0 60 30"><text x="0" y="26" font-family="sans-serif" font-size="26" font-weight="700" fill="none" stroke="url(#cyberGrad)" stroke-width="1.2">8</text></svg></div><div class="stat-label" id="totalLabel">全部好友</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="onlineCount"><svg width="60" height="30" viewBox="0 0 60 30"><text x="0" y="26" font-family="sans-serif" font-size="26" font-weight="700" fill="none" stroke="url(#cyberGrad)" stroke-width="1.2">5</text></svg></div><div class="stat-label" id="onlineLabel">在线</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="offlineCount"><svg width="60" height="30" viewBox="0 0 60 30"><text x="0" y="26" font-family="sans-serif" font-size="26" font-weight="700" fill="none" stroke="url(#cyberGrad)" stroke-width="1.2">3</text></svg></div><div class="stat-label" id="offlineLabel">离线</div>
+      </div>
+    </div>
+
+    <!-- 好友列表 -->
+    <div class="friend-grid" id="friendGrid"></div>
+  </div>
+</div>
+
+<script>
+// ========== 好友数据 ==========
+const friends = [
+  { id:'dm-zhang', name:'张经理', role:'项目总监', status:'online', lastSeen:'在线', color:'linear-gradient(135deg, #6c5ce7, #a855f7)', emoji:'👔', bio:'专注项目管理十年，星域集团核心骨干', region:'北京 · 中国' },
+  { id:'dm-li', name:'李工', role:'高级工程师', status:'online', lastSeen:'在线', color:'linear-gradient(135deg, #22c55e, #16a34a)', emoji:'🔧', bio:'代码即艺术，热爱开源', region:'深圳 · 中国' },
+  { id:'dm-wang', name:'王设计', role:'设计主管', status:'busy', lastSeen:'忙碌中', color:'linear-gradient(135deg, #f59e0b, #d97706)', emoji:'🎨', bio:'用设计让世界更美好 ✨', region:'上海 · 中国' },
+  { id:'dm-zhao', name:'赵运营', role:'运营经理', status:'online', lastSeen:'在线', color:'linear-gradient(135deg, #00d2ff, #0098db)', emoji:'📊', bio:'数据驱动运营，结果说话', region:'广州 · 中国' },
+  { id:'dm-awang', name:'智能阿旺', role:'AI助手', status:'online', lastSeen:'24小时在线', color:'linear-gradient(135deg, #6c5ce7, #00d2ff)', emoji:'🐾', bio:'星域集团AI助手，随时为你服务 🚀', region:'云端 · 星域网络' },
+  { id:'dm-liu', name:'刘前端', role:'前端开发', status:'offline', lastSeen:'1小时前在线', color:'linear-gradient(135deg, #ef4444, #dc2626)', emoji:'💻', bio:'追求像素级完美', region:'杭州 · 中国' },
+  { id:'dm-chen', name:'陈后端', role:'后端开发', status:'offline', lastSeen:'3小时前在线', color:'linear-gradient(135deg, #8b5cf6, #6366f1)', emoji:'🖥️', bio:'高并发架构爱好者', region:'成都 · 中国' },
+  { id:'dm-zhou', name:'周测试', role:'测试工程师', status:'offline', lastSeen:'昨天在线', color:'linear-gradient(135deg, #ec4899, #db2777)', emoji:'🧪', bio:'Bug猎手，一个都不放过 🔍', region:'武汉 · 中国' },
+];
+
+let currentTab = 'all';
+let deletedCount = 0;
+
+// ========== 渲染 ==========
+function renderFriends(data) {
+  if (data.length === 0) {
+    document.getElementById('friendGrid').innerHTML = `
+      <div class="empty-state" style="grid-column:1/-1">
+        <span class="empty-icon">👤</span>
+        <h3>没有找到好友</h3>
+        <p>试试其他筛选条件，或者添加新好友</p>
+      </div>`;
+    return;
+  }
+  let html = '';
+  for (const f of data) {
+    const statusCls = f.status === 'online' ? 'online' : f.status === 'busy' ? 'busy' : 'offline';
+    html += `
+      <div class="friend-card" onclick="openChat('${f.id}')">
+        <div class="friend-avatar" style="background:${f.color}">
+          ${f.emoji}
+          <span class="status-dot ${statusCls}"></span>
+        </div>
+        <div class="friend-info">
+          <h4>${f.name}</h4>
+          <div class="last-seen">${f.lastSeen}</div>
+        </div>
+        <div class="friend-actions">
+          <button class="action-btn" title="更多" style="position:relative" onclick="event.stopPropagation();toggleMoreMenu(event, '${f.id}')">⋯</button>
+        </div>
+      </div>`;
+  }
+  document.getElementById('friendGrid').innerHTML = html;
+}
+
+function filterFriends() {
+  const query = document.getElementById('searchInput').value.toLowerCase();
+  let data = friends;
+  if (currentTab === 'blocked') {
+    data = data.filter(f => f.blocked);
+  } else {
+    // 全部/在线/离线 排除黑名单
+    data = data.filter(f => !f.blocked);
+    if (currentTab === 'online') data = data.filter(f => f.status === 'online' || f.status === 'busy');
+    else if (currentTab === 'offline') data = data.filter(f => f.status === 'offline');
+  }
+  if (query) data = data.filter(f => f.name.toLowerCase().includes(query));
+  renderFriends(data);
+  updateStats(data);
+}
+
+function switchTab(el, tab) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  currentTab = tab;
+  // 切换统计标签
+  if (tab === 'blocked') {
+    document.getElementById('totalLabel').textContent = '黑名单数量';
+    document.getElementById('onlineLabel').textContent = '删除数量';
+    document.getElementById('offlineLabel').textContent = '';
+    document.getElementById('offlineCount').textContent = '';
+  } else {
+    document.getElementById('totalLabel').textContent = '全部好友';
+    document.getElementById('onlineLabel').textContent = '在线';
+    document.getElementById('offlineLabel').textContent = '离线';
+  }
+  filterFriends();
+}
+
+function updateStats(data) {
+  if (currentTab === 'blocked') {
+    document.getElementById('totalCount').innerHTML = '<svg width="60" height="30" viewBox="0 0 60 30"><text x="0" y="26" font-family="sans-serif" font-size="26" font-weight="700" fill="none" stroke="url(#cyberGrad)" stroke-width="1.2">' + data.filter(f => f.blocked).length + '</text></svg>';
+    document.getElementById('onlineCount').innerHTML = '<svg width="60" height="30" viewBox="0 0 60 30"><text x="0" y="26" font-family="sans-serif" font-size="26" font-weight="700" fill="none" stroke="url(#cyberGrad)" stroke-width="1.2">' + deletedCount + '</text></svg>';
+    document.getElementById('offlineCount').textContent = '';
+  } else {
+    document.getElementById('totalCount').innerHTML = '<svg width="60" height="30" viewBox="0 0 60 30"><text x="0" y="26" font-family="sans-serif" font-size="26" font-weight="700" fill="none" stroke="url(#cyberGrad)" stroke-width="1.2">' + data.filter(f => !f.blocked).length + '</text></svg>';
+    document.getElementById('onlineCount').innerHTML = '<svg width="60" height="30" viewBox="0 0 60 30"><text x="0" y="26" font-family="sans-serif" font-size="26" font-weight="700" fill="none" stroke="url(#cyberGrad)" stroke-width="1.2">' + data.filter(f => !f.blocked && (f.status === 'online' || f.status === 'busy')).length + '</text></svg>';
+    document.getElementById('offlineCount').innerHTML = '<svg width="60" height="30" viewBox="0 0 60 30"><text x="0" y="26" font-family="sans-serif" font-size="26" font-weight="700" fill="none" stroke="url(#cyberGrad)" stroke-width="1.2">' + data.filter(f => !f.blocked && f.status === 'offline').length + '</text></svg>';
+  }
+}
+
+function openChat(id) {
+  if (document.getElementById('moreMenu')) return;
+  if (document.getElementById('profileModal')?.classList.contains('show')) return;
+  window.location.href = 'chat.html?friend=' + id;
+}
+
+// ========== 资料弹窗 ==========
+let currentProfileId = null;
+
+function viewProfile(id) {
+  closeMoreMenu();
+  const f = friends.find(f => f.id === id);
+  if (!f) return;
+  currentProfileId = id;
+  document.getElementById('profileBanner').style.background = f.color;
+  document.getElementById('profileAvatar').style.background = f.color;
+  document.getElementById('profileAvatar').textContent = f.emoji;
+  document.getElementById('profileName').textContent = f.name;
+  document.getElementById('profileId').textContent = 'ID: ' + f.id;
+  const statusText = f.status === 'online' ? '在线' : f.status === 'busy' ? '忙碌' : '离线';
+  document.getElementById('profileStatus').innerHTML = `<span class="status-badge ${f.status}${f.blocked?' blocked':''}">${f.blocked ? '🚫 已拉黑' : '● ' + statusText}</span>`;
+  document.getElementById('profileBio').textContent = f.bio || '这个人很懒，什么都没写...';
+  document.getElementById('profileRegion').textContent = f.region || '未知地区';
+  document.getElementById('profileModal').classList.add('show');
+}
+
+function closeProfileModal() {
+  document.getElementById('profileModal').classList.remove('show');
+  currentProfileId = null;
+}
+
+function profileOpenChat() {
+  if (currentProfileId) openChat(currentProfileId);
+}
+
+// 点击遮罩关闭
+document.addEventListener('click', function(e) {
+  if (e.target.id === 'profileModal') closeProfileModal();
+});
+
+// ========== 更多菜单 ==========
+let activeMenuFriendId = null;
+
+function toggleMoreMenu(e, friendId) {
+  e.stopPropagation();
+  const oldMenu = document.getElementById('moreMenu');
+  if (oldMenu) { oldMenu.remove(); if (activeMenuFriendId === friendId) { activeMenuFriendId = null; return; } }
+  activeMenuFriendId = friendId;
+
+  const friend = friends.find(f => f.id === friendId);
+  const isBlocked = friend && friend.blocked;
+  const btnRect = e.target.getBoundingClientRect();
+
+  const menu = document.createElement('div');
+  menu.id = 'moreMenu';
+  menu.className = 'more-menu show';
+  menu.innerHTML = `
+    <div class="more-menu-item" data-action="view" data-id="${friendId}">👤 查看资料</div>
+    <div class="more-menu-item danger" data-action="remove" data-id="${friendId}">🗑️ 删除好友</div>
+    <div class="more-menu-item danger" data-action="block" data-id="${friendId}">${isBlocked ? '✅ 移出黑名单' : '🚫 加入黑名单'}</div>
+    <div class="more-menu-item danger" data-action="report" data-id="${friendId}">⚠️ 举报用户</div>
+  `;
+
+  menu.style.left = Math.min(btnRect.right - 140, btnRect.left) + 'px';
+  menu.style.top = (btnRect.bottom + 4) + 'px';
+
+  menu.querySelectorAll('.more-menu-item').forEach(item => {
+    item.addEventListener('click', function(ev) {
+      ev.stopPropagation();
+      const action = this.dataset.action;
+      const id = this.dataset.id;
+      if (action === 'view') viewProfile(id);
+      else if (action === 'remove') removeFriend(id);
+      else if (action === 'block') blockFriend(id);
+      else if (action === 'report') reportFriend(id);
+    });
+  });
+
+  document.body.appendChild(menu);
+}
+
+function removeFriend(id) {
+  closeMoreMenu();
+  if (!confirm('确定要删除该好友吗？')) return;
+  const idx = friends.findIndex(f => f.id === id);
+  if (idx >= 0) {
+    friends.splice(idx, 1);
+    deletedCount++;
+  }
+  filterFriends();
+}
+
+function blockFriend(id) {
+  closeMoreMenu();
+  const f = friends.find(f => f.id === id);
+  if (!f) return;
+  f.blocked = !f.blocked;
+  filterFriends();
+}
+
+function reportFriend(id) {
+  closeMoreMenu();
+  const f = friends.find(f => f.id === id);
+  if (!f) return;
+  const reason = prompt(`举报 ${f.name}，请输入举报原因：`);
+  if (reason && reason.trim()) {
+    alert(`已提交举报：${reason.trim()}\n我们会尽快处理。`);
+  }
+}
+
+function closeMoreMenu() {
+  activeMenuFriendId = null;
+  const menu = document.getElementById('moreMenu');
+  if (menu) menu.remove();
+}
+
+// 点击其他位置关闭菜单
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.friend-actions')) closeMoreMenu();
+});
+
+function openAddFriend() {
+  document.getElementById('addFriendInput').value = '';
+  document.getElementById('searchResult').innerHTML = '<div class="search-empty">输入ID搜索用户</div>';
+  document.getElementById('addFriendModal').classList.add('show');
+  setTimeout(() => document.getElementById('addFriendInput').focus(), 100);
+}
+
+function closeAddFriendModal() {
+  document.getElementById('addFriendModal').classList.remove('show');
+}
+
+function searchUser() {
+  const query = document.getElementById('addFriendInput').value.trim();
+  if (!query) return;
+  // 模拟搜索
+  const mockUsers = [
+    { id:'dm-sun', name:'孙运维', role:'运维工程师', status:'online', bio:'自动化运维爱好者', region:'南京 · 中国', color:'linear-gradient(135deg, #6366f1, #8b5cf6)', emoji:'⚙️' },
+    { id:'dm-qian', name:'钱架构', role:'架构师', status:'online', bio:'分布式系统设计', region:'北京 · 中国', color:'linear-gradient(135deg, #06b6d4, #0891b2)', emoji:'🏗️' },
+    { id:'dm-wu', name:'吴全栈', role:'全栈开发', status:'busy', bio:'前后端通吃', region:'杭州 · 中国', color:'linear-gradient(135deg, #f59e0b, #ea580c)', emoji:'🥞' },
+    { id:'dm-zheng', name:'郑实习', role:'实习生', status:'offline', bio:'努力学习中 📖', region:'广州 · 中国', color:'linear-gradient(135deg, #ec4899, #f43f5e)', emoji:'📖' },
+    { id:'dm-keji', name:'科技猫', role:'AI伙伴', status:'online', bio:'喵~ 我是阿旺的小伙伴', region:'云端 · 星域网络', color:'linear-gradient(135deg, #a855f7, #d946ef)', emoji:'🐱' },
+  ];
+  const results = mockUsers.filter(u => u.id.includes(query.toLowerCase()) || u.name.includes(query));
+  if (results.length === 0) {
+    document.getElementById('searchResult').innerHTML = '<div class="search-empty">未找到匹配用户</div>';
+    return;
+  }
+  let html = '';
+  for (const u of results) {
+    const alreadyFriend = friends.find(f => f.id === u.id);
+    html += `<div class="search-result-item" onclick="${alreadyFriend ? `viewProfile('${u.id}')` : `addSearchedUser('${u.id}')`}">
+      <div class="search-avatar" style="background:${u.color}">${u.emoji}</div>
+      <div class="search-info">
+        <h4>${u.name}${alreadyFriend ? ' <span style="font-size:11px;color:var(--green)">● 已是好友</span>' : ''}</h4>
+        <span>ID: ${u.id}</span>
+      </div>
+    </div>`;
+  }
+  document.getElementById('searchResult').innerHTML = html;
+}
+
+function addSearchedUser(id) {
+  const mockUsers = [
+    { id:'dm-sun', name:'孙运维', role:'运维工程师', status:'online', bio:'自动化运维爱好者', region:'南京 · 中国', color:'linear-gradient(135deg, #6366f1, #8b5cf6)', emoji:'⚙️' },
+    { id:'dm-qian', name:'钱架构', role:'架构师', status:'online', bio:'分布式系统设计', region:'北京 · 中国', color:'linear-gradient(135deg, #06b6d4, #0891b2)', emoji:'🏗️' },
+    { id:'dm-wu', name:'吴全栈', role:'全栈开发', status:'busy', bio:'前后端通吃', region:'杭州 · 中国', color:'linear-gradient(135deg, #f59e0b, #ea580c)', emoji:'🥞' },
+    { id:'dm-zheng', name:'郑实习', role:'实习生', status:'offline', bio:'努力学习中 📖', region:'广州 · 中国', color:'linear-gradient(135deg, #ec4899, #f43f5e)', emoji:'📖' },
+    { id:'dm-keji', name:'科技猫', role:'AI伙伴', status:'online', bio:'喵~ 我是阿旺的小伙伴', region:'云端 · 星域网络', color:'linear-gradient(135deg, #a855f7, #d946ef)', emoji:'🐱' },
+  ];
+  const u = mockUsers.find(m => m.id === id);
+  if (!u) return;
+  if (friends.find(f => f.id === id)) {
+    alert('该好友已存在');
+    return;
+  }
+  friends.push({
+    id: u.id, name: u.name, role: u.role, status: u.status,
+    lastSeen: '刚刚加入',
+    color: u.color, emoji: u.emoji,
+    bio: u.bio, region: u.region
+  });
+  closeAddFriendModal();
+  filterFriends();
+}
+
+// 点击遮罩关闭
+document.addEventListener('click', function(e) {
+  if (e.target.id === 'addFriendModal') closeAddFriendModal();
+});
+
+// 旧版函数已移除，保留兼容
+
+// 初始加载
+renderFriends(friends);
+updateStats(friends);
+
+  // LED灯条和灯点
+  (function() {
+    const container = document.getElementById('bgStars') || document.querySelector('.bg-stars');
+    if (!container) return;
+    const colors = ['#00d2ff','#ff00ff','#6c5ce7','#00ff88','#ff4488','#a855f7','#00e5ff','#ff3399'];
+    for (let i = 0; i < 40; i++) {
+      const strip = document.createElement('div');
+      strip.style.cssText = 'position:fixed;pointer-events:none;z-index:0;left:'+(Math.random()*100)+'%;top:'+(Math.random()*100)+'%;width:'+(30+Math.random()*80)+'px;height:'+(1+Math.random()*3)+'px;background:'+colors[Math.floor(Math.random()*colors.length)]+';border-radius:2px;opacity:0;box-shadow:0 0 '+(4+Math.random()*8)+'px currentColor;animation:ledBlink 1.5s ease-in-out infinite;animation-delay:'+(Math.random()*1.5)+'s;'+(Math.random()>0.5?'transform:rotate(90deg);':'');
+      container.appendChild(strip);
+    }
+    for (let i = 0; i < 80; i++) {
+      const dot = document.createElement('div');
+      dot.style.cssText = 'position:fixed;pointer-events:none;z-index:0;left:'+(Math.random()*100)+'%;top:'+(Math.random()*100)+'%;width:'+(1+Math.random()*3)+'px;height:'+(1+Math.random()*3)+'px;border-radius:50%;background:'+colors[Math.floor(Math.random()*colors.length)]+';opacity:0;box-shadow:0 0 '+(3+Math.random()*6)+'px currentColor;animation:ledBlink 1.5s ease-in-out infinite;animation-delay:'+(Math.random()*1.5)+'s;';
+      container.appendChild(dot);
+    }
+  })();</script>
+
+<!-- ═══ 添加好友弹窗 ═══ -->
+<div class="add-friend-overlay" id="addFriendModal">
+  <div class="add-friend-modal">
+    <div class="add-friend-header">
+      <button class="add-friend-close" onclick="closeAddFriendModal()">✖️</button>
+      <h2>➕ 添加好友</h2>
+      <p>输入用户ID搜索</p>
+    </div>
+    <div class="add-friend-body">
+      <div class="search-row">
+        <input id="addFriendInput" placeholder="输入ID..." onkeydown="if(event.key==='Enter')searchUser()">
+        <button class="search-btn" onclick="searchUser()">搜索</button>
+      </div>
+      <div class="search-result" id="searchResult"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ 查看资料弹窗 ═══ -->
+<div class="profile-overlay" id="profileModal">
+  <div class="profile-modal">
+    <div class="profile-banner" id="profileBanner">
+      <button class="profile-close" onclick="closeProfileModal()">✖️</button>
+      <div class="profile-avatar-large" id="profileAvatar"></div>
+    </div>
+    <div class="profile-body">
+      <h3 id="profileName"></h3>
+      <div class="profile-id" id="profileId"></div>
+      <div class="profile-field"><span class="pf-label">状态</span><span class="pf-value" id="profileStatus"></span></div>
+      <div class="profile-field"><span class="pf-label">签名</span><span class="pf-value" id="profileBio"></span></div>
+      <div class="profile-field"><span class="pf-label">IP地区</span><span class="pf-value" id="profileRegion"></span></div>
+    </div>
+    <div class="profile-actions">
+      <button class="btn btn-close" onclick="closeProfileModal()">关闭</button>
+      <button class="btn btn-msg" id="profileChatBtn" onclick="profileOpenChat()">💬 发消息</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
